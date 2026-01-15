@@ -54,7 +54,7 @@ router.delete('/invoices/:id', protect, deleteInvoice);
 
 /**
  * @route   GET /api/invoices/:id/pdf
- * @desc    Generate and download Proforma/Invoice PDF
+ * @desc    Generate and download Proforma/Invoice PDf
  * @access  Private
  */
 router.get('/invoices/:id/pdf', protect, generateInvoicePDF);
