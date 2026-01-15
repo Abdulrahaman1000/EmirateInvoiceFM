@@ -830,7 +830,7 @@
               "host": ["{{base_url}}"],
               "path": ["dashboard"]
             },
-            "description": "Get dashboard summary with analytics"
+            "description": "Get dashboard summary wit analytics"
           },
           "response": []
         }
