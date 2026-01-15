@@ -21,7 +21,7 @@ const authRoutes = require('./src/routes/auth');
 const stationRoutes = require('./src/routes/station');
 const clientRoutes = require('./src/routes/client');
 const rateRoutes = require('./src/routes/rate');
-const invoiceRoutes = require('./src/routes/invoice');
+const invoiceRoutes = require('./src/routes/Invoice');
 const paymentRoutes = require('./src/routes/payment');
 const dashboardRoutes = require('./src/routes/dashboard');
 
