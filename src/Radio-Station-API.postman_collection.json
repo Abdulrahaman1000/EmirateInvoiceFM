@@ -1,0 +1,840 @@
+{
+  "info": {
+    "name": "Radio Station Invoicing API",
+    "description": "Complete API collection for Emirate FM 98.5 FM Invoicing System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    pm.environment.set('token', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Admin login - Returns JWT token that's automatically saved"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            },
+            "description": "Logout endpoint (optional - client can just discard token)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Station Configuration",
+      "item": [
+        {
+          "name": "Get Station Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/station",
+              "host": ["{{base_url}}"],
+              "path": ["station"]
+            },
+            "description": "Get station configuration (name, address, bank details, logo)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Station Details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emirate FM 98.5 FM\",\n  \"address\": \"Behind Federal Ministry of Environment, Off Jebba Road, Ilorin, Kwara State, Nigeria.\",\n  \"phone\": \"+234-803-123-4567\",\n  \"email\": \"info@emiratefm.com\",\n  \"bank_name\": \"First Bank of Nigeria\",\n  \"account_name\": \"Emirate FM Limited\",\n  \"account_number\": \"1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/station",
+              "host": ["{{base_url}}"],
+              "path": ["station"]
+            },
+            "description": "Update station configuration"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Client Management",
+      "item": [
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": ["{{base_url}}"],
+              "path": ["clients"]
+            },
+            "description": "Get all clients"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients?search=Fem",
+              "host": ["{{base_url}}"],
+              "path": ["clients"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Fem"
+                }
+              ]
+            },
+            "description": "Search clients by company name"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": ["{{base_url}}"],
+              "path": ["clients", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_CLIENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single client by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"Fem Tech Limited\",\n  \"address\": \"Fem Tech Office, Plot 123, Victoria Island, Lagos\",\n  \"phone\": \"08012345678\",\n  \"email\": \"info@femtech.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/clients",
+              "host": ["{{base_url}}"],
+              "path": ["clients"]
+            },
+            "description": "Create new client"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"Fem Tech Limited - Updated\",\n  \"phone\": \"08098765432\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": ["{{base_url}}"],
+              "path": ["clients", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_CLIENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update client details"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clients/:id",
+              "host": ["{{base_url}}"],
+              "path": ["clients", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_CLIENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Delete client (only if no invoices exist)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Rate Card Management",
+      "item": [
+        {
+          "name": "Get All Rates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rates",
+              "host": ["{{base_url}}"],
+              "path": ["rates"]
+            },
+            "description": "Get all service rates"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rate by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rates/:id",
+              "host": ["{{base_url}}"],
+              "path": ["rates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_RATE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single rate by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Rate - Advert Spot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Advert Spot\",\n  \"duration\": \"30s\",\n  \"time_slot\": \"Mid-Prime\",\n  \"price\": 4000,\n  \"description\": \"30 seconds advertisement spot during mid-prime time\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rates",
+              "host": ["{{base_url}}"],
+              "path": ["rates"]
+            },
+            "description": "Create new rate - Advert Spot example"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Rate - Jingle Production",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Jingle Production\",\n  \"duration\": \"60s\",\n  \"price\": 50000,\n  \"description\": \"60 seconds jingle production with voice-over\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rates",
+              "host": ["{{base_url}}"],
+              "path": ["rates"]
+            },
+            "description": "Create new rate - Jingle Production example"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rate",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 4500,\n  \"description\": \"Updated price for 30s mid-prime spot\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rates/:id",
+              "host": ["{{base_url}}"],
+              "path": ["rates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_RATE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update rate details"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rate",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rates/:id",
+              "host": ["{{base_url}}"],
+              "path": ["rates", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_RATE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Delete rate"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Invoice Management",
+      "item": [
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"]
+            },
+            "description": "Get all invoices/proformas"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Invoices by Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices?client_id=PUT_CLIENT_ID_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"],
+              "query": [
+                {
+                  "key": "client_id",
+                  "value": "PUT_CLIENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Filter invoices by client ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Invoices by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            },
+            "description": "Filter invoices by status (pending, partial, paid, cancelled)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices/:id",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_INVOICE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single invoice details"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Invoice/Proforma",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": \"PUT_CLIENT_ID_HERE\",\n  \"invoice_type\": \"proforma\",\n  \"invoice_date\": \"2026-01-09\",\n  \"services\": [\n    {\n      \"description\": \"Mobile Phone & Solar Advertisement\",\n      \"duration\": \"30 seconds\",\n      \"daily_slots\": 10,\n      \"campaign_days\": 30,\n      \"rate_per_slot\": 4000\n    },\n    {\n      \"description\": \"Weekend Special Promotion\",\n      \"duration\": \"60 seconds\",\n      \"daily_slots\": 5,\n      \"campaign_days\": 8,\n      \"rate_per_slot\": 6000\n    }\n  ],\n  \"payment_terms\": \"This bill is issued in advance and payment must be made before commencement of broadcast.\",\n  \"notes\": \"Campaign starts on Monday, January 13, 2026\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/invoices",
+              "host": ["{{base_url}}"],
+              "path": ["invoices"]
+            },
+            "description": "Create new invoice/proforma"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"services\": [\n    {\n      \"description\": \"Mobile Phone & Solar Advertisement - Updated\",\n      \"duration\": \"30 seconds\",\n      \"daily_slots\": 12,\n      \"campaign_days\": 30,\n      \"rate_per_slot\": 4000\n    }\n  ],\n  \"notes\": \"Updated campaign details\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/invoices/:id",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_INVOICE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update invoice (only if not fully paid)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices/:id",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_INVOICE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Delete draft invoice"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Invoice PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/invoices/:id/pdf",
+              "host": ["{{base_url}}"],
+              "path": ["invoices", ":id", "pdf"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_INVOICE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Generate and download invoice PDF"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Payment Management",
+      "item": [
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["payments"]
+            },
+            "description": "Get all payment records"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Payments by Invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments?invoice_id=PUT_INVOICE_ID_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["payments"],
+              "query": [
+                {
+                  "key": "invoice_id",
+                  "value": "PUT_INVOICE_ID_HERE"
+                }
+              ]
+            },
+            "description": "Filter payments by invoice ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/payments/:id",
+              "host": ["{{base_url}}"],
+              "path": ["payments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PUT_PAYMENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single payment details"
+          },
+          "response": []
+        },
+        {
+          "name": "Record Payment - Full",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": \"PUT_INVOICE_ID_HERE\",\n  \"amount_paid\": 1200000,\n  \"payment_method\": \"Bank Transfer\",\n  \"transaction_ref\": \"TRF-20260109-001\",\n  \"date_received\": \"2026-01-09\",\n  \"received_by\": \"Aisha Mohammed\",\n  \"position\": \"Accounts Officer\",\n  \"notes\": \"Full payment for 30-day campaign\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["payments"]
+            },
+            "description": "Record full payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Record Payment - Partial",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": \"PUT_INVOICE_ID_HERE\",\n  \"amount_paid\": 600000,\n  \"payment_method\": \"Cash\",\n  \"date_received\": \"2026-01-09\",\n  \"received_by\": \"Ibrahim Suleiman\",\n  \"position\": \"Cashier\",\n  \"notes\": \"Partial payment - 50% advance\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["payments"]
+            },
+            "description": "Record partial payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Receipt PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/receipts/:payment_id/pdf",
+              "host": ["{{base_url}}"],
+              "path": ["receipts", ":payment_id", "pdf"],
+              "variable": [
+                {
+                  "key": "payment_id",
+                  "value": "PUT_PAYMENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Generate and download receipt PDF"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard"]
+            },
+            "description": "Get dashboard summary with analytics"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
