@@ -48,34 +48,53 @@ mongoose.connect(process.env.MONGODB_URI)
 // Security headers
 app.use(helmet());
 
-// CORS configuration
-// CORS configuration - Allow multiple origins
+// ============================================
+// CORS CONFIGURATION - UPDATED FOR DEPLOYMENT
+// ============================================
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',  // Vite's default port
-  process.env.CLIENT_URL
+  'http://localhost:5174',  // Backup Vite port
+  process.env.CLIENT_URL,   // Your Vercel URL from environment variable
+  'https://your-app.vercel.app', // Replace with your actual Vercel URL
 ].filter(Boolean);
+
+// Log allowed origins for debugging
+console.log('🌐 Allowed CORS Origins:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
     
+    // Check if origin is in allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS: Allowing origin:', origin);
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.log('❌ CORS: Blocking origin:', origin);
+      callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Disposition'], // For file downloads
+  maxAge: 86400 // 24 hours
 }));
 
 // Compress responses
 app.use(compression());
 
-// Logging (only in development)
+// Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
+} else {
+  // In production, use combined format for better logging
+  app.use(morgan('combined'));
 }
 
 // Body parser
@@ -88,11 +107,13 @@ app.use('/uploads', express.static('uploads'));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // More lenient in development
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -111,11 +132,24 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'Radio Station Invoicing API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version
   });
 });
 
-// API version
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Radio Station Invoicing System API',
+    station: 'Emirate FM 98.5 FM',
+    version: 'v1.0',
+    docs: '/api-docs',
+    api: '/api'
+  });
+});
+
+// API version info
 app.get('/api', (req, res) => {
   res.json({
     success: true,
@@ -163,14 +197,15 @@ app.use(errorHandler);
 // ============================================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`🎙️  Radio Station Invoicing System - Emirate FM 98.5 FM`);
   console.log('='.repeat(60));
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 API URL: http://localhost:${PORT}/api`);
   console.log(`📚 Swagger Docs: http://localhost:${PORT}/api-docs`);
+  console.log(`🔒 CORS Enabled for: ${allowedOrigins.join(', ')}`);
   console.log('='.repeat(60));
 });
 
@@ -183,6 +218,14 @@ process.on('unhandledRejection', (err) => {
 // Handle SIGTERM
 process.on('SIGTERM', () => {
   console.log('👋 SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('💤 Process terminated');
+  });
+});
+
+// Handle SIGINT (Ctrl+C)
+process.on('SIGINT', () => {
+  console.log('👋 SIGINT received. Shutting down gracefully...');
   server.close(() => {
     console.log('💤 Process terminated');
   });
