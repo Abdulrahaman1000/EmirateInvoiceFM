@@ -56,7 +56,7 @@ const allowedOrigins = [
   'http://localhost:5173',  // Vite's default port
   'http://localhost:5174',  // Backup Vite port
   process.env.CLIENT_URL,   // Your Vercel URL from environment variable
-  'https://your-app.vercel.app', // Replace with your actual Vercel URL
+  'https://emiratefm.vercel.app/login', // Replace with your actual Vercel URL
 ].filter(Boolean);
 
 // Log allowed origins for debugging
