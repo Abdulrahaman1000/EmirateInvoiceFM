@@ -1,13 +1,13 @@
 // ============================================
 // FILE: src/services/pdfService.js
-// PDF Generation Service - Professional Styled
+// PDF Generation Service - Professional Styled with VAT
 // ============================================
 
 const PDFDocument = require('pdfkit');
 const { formatCurrency, formatDate } = require('../utils/numberToWords');
 
 /**
- * Generate Invoice/Proforma PDF with professional styling
+ * Generate Invoice/Proforma PDF with professional styling and VAT
  * @param {Object} invoice - Invoice object with populated client
  * @param {Object} station - Station details
  * @returns {Buffer} - PDF buffer
@@ -48,9 +48,9 @@ exports.generateInvoicePDF = async (invoice, station) => {
       });
 
       // Colors
-      const primaryColor = '#1e40af'; // Blue
-      const secondaryColor = '#3b82f6'; // Light blue
-      const accentColor = '#f59e0b'; // Orange/Gold
+      const primaryColor = '#1e40af';
+      const secondaryColor = '#3b82f6';
+      const accentColor = '#f59e0b';
       const darkGray = '#374151';
       const lightGray = '#f3f4f6';
 
@@ -75,10 +75,8 @@ exports.generateInvoicePDF = async (invoice, station) => {
       };
 
       // ==================== HEADER ====================
-      // Top colored bar
       doc.rect(0, 0, 612, 80).fill(primaryColor);
 
-      // Station Logo/Name
       doc.fontSize(24)
          .fillColor('#ffffff')
          .font('Helvetica-Bold')
@@ -89,7 +87,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
          .font('Helvetica')
          .text(station.address || '', 50, 55, { width: 300 });
 
-      // Contact Info (Right side of header)
       if (station.phone) {
         doc.fontSize(9).text(`Phone: ${station.phone}`, 400, 30, { align: 'right', width: 150 });
       }
@@ -97,20 +94,18 @@ exports.generateInvoicePDF = async (invoice, station) => {
         doc.fontSize(9).text(`Email: ${station.email}`, 400, 45, { align: 'right', width: 150 });
       }
 
-      // RC Number if available
       if (station.rc_number) {
         doc.fontSize(8)
            .fillColor('#e5e7eb')
            .text(`RC: ${station.rc_number}`, 400, 60, { align: 'right', width: 150 });
       }
 
-      doc.fillColor(darkGray); // Reset color
+      doc.fillColor(darkGray);
 
       // ==================== INVOICE TITLE ====================
       doc.moveDown(3);
       const title = invoice.invoice_type === 'proforma' ? 'PROFORMA INVOICE' : 'ADVANCE BILL';
       
-      // Colored background for title
       const titleY = doc.y;
       doc.rect(40, titleY - 5, 532, 30).fill(lightGray);
       
@@ -124,7 +119,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
       // ==================== CLIENT & INVOICE INFO ====================
       const infoY = doc.y;
 
-      // Left Box - Client Info
       doc.rect(40, infoY, 260, 100).stroke('#d1d5db');
       doc.fontSize(9)
          .fillColor(primaryColor)
@@ -147,7 +141,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
         doc.text(`Email: ${invoice.client_id.email}`, 50, infoY + 82);
       }
 
-      // Right Box - Invoice Details
       doc.rect(312, infoY, 260, 100).fill(lightGray).stroke('#d1d5db');
 
       const detailsX = 322;
@@ -164,7 +157,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
       detailY += 18;
       doc.font('Helvetica-Bold').text('Status:', detailsX, detailY);
       
-      // Colored status badge
       const statusColor = invoice.status === 'paid' ? '#10b981' : 
                          invoice.status === 'partial' ? accentColor : '#ef4444';
       doc.fillColor(statusColor)
@@ -185,7 +177,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
       // ==================== SERVICES TABLE ====================
       const tableTop = doc.y;
       
-      // Table header with colored background
       doc.rect(40, tableTop, 532, 25).fill(primaryColor);
 
       const col1X = 50;
@@ -206,12 +197,10 @@ exports.generateInvoicePDF = async (invoice, station) => {
       doc.text('RATE', col5X, tableTop + 8);
       doc.text('TOTAL', col6X, tableTop + 8, { align: 'right' });
 
-      // Table rows
       let yPos = tableTop + 35;
       doc.fillColor(darkGray).font('Helvetica');
 
       invoice.services.forEach((service, index) => {
-        // Alternate row colors
         if (index % 2 === 0) {
           doc.rect(40, yPos - 5, 532, 25).fill('#fafafa');
         }
@@ -221,7 +210,6 @@ exports.generateInvoicePDF = async (invoice, station) => {
           yPos = 50;
         }
 
-        // Calculate line total if not present
         const lineTotal = service.line_total || 
                          (service.daily_slots * service.campaign_days * service.rate_per_slot);
 
@@ -238,11 +226,10 @@ exports.generateInvoicePDF = async (invoice, station) => {
         doc.font('Helvetica');
       });
 
-      // ==================== TOTALS SECTION ====================
+      // ==================== TOTALS SECTION WITH VAT ====================
       yPos += 10;
       
-      // Totals box with colored background
-      doc.rect(350, yPos, 222, 80).fill(lightGray).stroke(primaryColor);
+      doc.rect(350, yPos, 222, 130).fill(lightGray).stroke(primaryColor);
 
       yPos += 10;
 
@@ -251,14 +238,25 @@ exports.generateInvoicePDF = async (invoice, station) => {
       doc.font('Helvetica').text((invoice.total_slots || 0).toString(), 520, yPos, { align: 'right' });
 
       yPos += 25;
+      
+      doc.font('Helvetica-Bold').text('SUBTOTAL:', 370, yPos);
+      doc.font('Helvetica').text(safeFormatCurrency(invoice.subtotal || 0), 480, yPos, { align: 'right' });
+
+      yPos += 20;
+      
+      const vatLabel = `VAT (${invoice.vat_rate || 7.5}%):`;
+      doc.fillColor(darkGray).font('Helvetica').text(vatLabel, 370, yPos);
+      doc.text(safeFormatCurrency(invoice.vat_amount || 0), 480, yPos, { align: 'right' });
+
+      yPos += 25;
+      
       doc.rect(350, yPos - 5, 222, 35).fill(primaryColor);
-      doc.fontSize(12).fillColor('#ffffff').font('Helvetica-Bold');
-      doc.text('TOTAL AMOUNT:', 370, yPos + 5);
+      doc.fontSize(11).fillColor('#ffffff').font('Helvetica-Bold');
+      doc.text('TOTAL AMOUNT PAYABLE:', 370, yPos + 5);
       doc.fontSize(14).text(safeFormatCurrency(invoice.total_amount || 0), 450, yPos + 5, { align: 'right' });
 
       yPos += 45;
 
-      // Amount in words
       if (invoice.amount_in_words) {
         doc.fontSize(9)
            .fillColor(darkGray)
@@ -353,30 +351,26 @@ exports.generateReceiptPDF = async (payment, station) => {
       });
       doc.on('error', reject);
 
-      // Get data
       const invoice = payment.invoice_id;
       const client = invoice.client_id;
       const receiptDate = new Date(payment.date_received);
 
-      // Enhanced color palette
-      const brandBlue = '#1e3a8a';      // Deep blue
-      const accentGold = '#f59e0b';     // Gold accent
-      const successGreen = '#10b981';   // Success green
-      const alertRed = '#ef4444';       // Alert red
-      const lightBg = '#f8fafc';        // Light background
-      const mediumGray = '#64748b';     // Medium gray
-      const darkText = '#1e293b';       // Dark text
-      const borderGray = '#cbd5e1';     // Border gray
+      const brandBlue = '#1e3a8a';
+      const accentGold = '#f59e0b';
+      const successGreen = '#10b981';
+      const alertRed = '#ef4444';
+      const lightBg = '#f8fafc';
+      const mediumGray = '#64748b';
+      const darkText = '#1e293b';
+      const borderGray = '#cbd5e1';
 
       // ===================================
-      // DECORATIVE HEADER WITH GRADIENT EFFECT
+      // DECORATIVE HEADER
       // ===================================
       
-      // Top colored band with gradient simulation
       doc.rect(0, 0, 612, 100).fill(brandBlue);
-      doc.rect(0, 90, 612, 10).fill('#2563eb'); // Lighter blue bottom edge
+      doc.rect(0, 90, 612, 10).fill('#2563eb');
 
-      // Station branding with modern typography
       doc.fontSize(32)
          .font('Helvetica-Bold')
          .fillColor('#ffffff')
@@ -385,13 +379,11 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.fontSize(22)
          .text('EMIRATE FM', 130, 35);
       
-      // Tagline with elegant styling
       doc.fontSize(9)
          .font('Helvetica-Oblique')
          .fillColor('#e0e7ff')
          .text('The Voice of the North', 130, 63);
 
-      // Receipt number badge (top right) with rounded background
       const rcBoxX = 450;
       const rcBoxY = 35;
       doc.roundedRect(rcBoxX, rcBoxY, 112, 28, 4)
@@ -409,7 +401,7 @@ exports.generateReceiptPDF = async (payment, station) => {
          .text(payment.receipt_number, rcBoxX + 8, rcBoxY + 15);
 
       // ===================================
-      // DOCUMENT TITLE WITH UNDERLINE
+      // DOCUMENT TITLE
       // ===================================
       doc.fillColor(darkText);
       doc.moveDown(3.5);
@@ -420,7 +412,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .fillColor(brandBlue)
          .text('PAYMENT RECEIPT', 50, titleY, { align: 'center', width: 512 });
       
-      // Decorative underline
       doc.moveTo(220, titleY + 25)
          .lineTo(392, titleY + 25)
          .lineWidth(2)
@@ -430,28 +421,24 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.moveDown(2);
 
       // ===================================
-      // CLIENT INFORMATION CARD
+      // CLIENT INFORMATION
       // ===================================
       const clientBoxY = doc.y;
       
-      // Card with shadow effect
       doc.roundedRect(50, clientBoxY, 512, 95, 8)
          .fill(lightBg)
          .stroke(borderGray);
       
-      // Card header
       doc.fontSize(9)
          .font('Helvetica-Bold')
          .fillColor(mediumGray)
          .text('RECEIVED FROM', 65, clientBoxY + 15);
       
-      // Client name
       doc.fontSize(14)
          .font('Helvetica-Bold')
          .fillColor(darkText)
          .text(client.company_name, 65, clientBoxY + 32);
       
-      // Client details with icons (using bullets as icon substitutes)
       doc.fontSize(9)
          .font('Helvetica')
          .fillColor(mediumGray);
@@ -472,11 +459,10 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.moveDown(4);
 
       // ===================================
-      // PAYMENT DETAILS IN ELEGANT TABLE
+      // PAYMENT DETAILS
       // ===================================
       const detailsY = doc.y;
       
-      // Section header with background
       doc.roundedRect(50, detailsY, 512, 25, 4)
          .fill(brandBlue);
       
@@ -485,7 +471,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .fillColor('#ffffff')
          .text('PAYMENT INFORMATION', 65, detailsY + 8);
 
-      // Details table with alternating row colors
       const tableY = detailsY + 30;
       doc.roundedRect(50, tableY, 512, 140, 4)
          .stroke(borderGray);
@@ -505,7 +490,6 @@ exports.generateReceiptPDF = async (payment, station) => {
       ];
 
       details.forEach((detail, index) => {
-        // Alternating row backgrounds
         if (index % 2 === 0) {
           doc.rect(50, rowY - 5, 512, rowHeight).fill('#fafafa');
         }
@@ -525,22 +509,19 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.moveDown(4);
 
       // ===================================
-      // AMOUNT SECTION - FEATURED HIGHLIGHT
+      // AMOUNT SECTION
       // ===================================
       const amountBoxY = doc.y;
       
-      // Main amount card with gradient effect
       doc.roundedRect(50, amountBoxY, 512, 140, 8)
          .lineWidth(2)
          .strokeColor(brandBlue)
          .fill('#ffffff')
          .stroke();
 
-      // Header section with colored background
       doc.roundedRect(50, amountBoxY, 512, 60, 8)
          .fill('#dbeafe');
 
-      // Amount paid - large and prominent
       doc.fontSize(11)
          .font('Helvetica-Bold')
          .fillColor(brandBlue)
@@ -551,7 +532,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .fillColor(brandBlue)
          .text(formatCurrency(payment.amount_paid), 70, amountBoxY + 30);
 
-      // Financial breakdown table
       doc.fontSize(9)
          .font('Helvetica')
          .fillColor(darkText);
@@ -560,13 +540,11 @@ exports.generateReceiptPDF = async (payment, station) => {
       const financeLeftX = 70;
       const financeRightX = 480;
 
-      // Invoice total
       doc.text('Invoice Total', financeLeftX, financeY);
       doc.font('Helvetica-Bold')
          .text(formatCurrency(invoice.total_amount), financeRightX, financeY, { align: 'right' });
 
       financeY += 18;
-      // Previous payments
       doc.font('Helvetica')
          .fillColor(mediumGray)
          .text('Previous Payments', financeLeftX, financeY);
@@ -574,7 +552,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .text(formatCurrency(payment.invoice_balance_before - payment.amount_paid), financeRightX, financeY, { align: 'right' });
 
       financeY += 18;
-      // This payment
       doc.fillColor(darkText)
          .font('Helvetica')
          .text('This Payment', financeLeftX, financeY);
@@ -582,7 +559,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .font('Helvetica-Bold')
          .text(formatCurrency(payment.amount_paid), financeRightX, financeY, { align: 'right' });
 
-      // Divider line
       financeY += 12;
       doc.moveTo(70, financeY)
          .lineTo(532, financeY)
@@ -590,7 +566,6 @@ exports.generateReceiptPDF = async (payment, station) => {
          .stroke();
 
       financeY += 12;
-      // Outstanding balance with status
       doc.fillColor(darkText)
          .fontSize(10)
          .font('Helvetica-Bold')
@@ -605,7 +580,7 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.moveDown(3);
 
       // ===================================
-      // PAYMENT STATUS BADGE
+      // STATUS BADGE
       // ===================================
       if (payment.invoice_balance_after === 0) {
         const statusY = doc.y;
@@ -642,7 +617,7 @@ exports.generateReceiptPDF = async (payment, station) => {
       doc.moveDown(1);
 
       // ===================================
-      // NOTES SECTION (if available)
+      // NOTES SECTION
       // ===================================
       if (payment.notes) {
         const notesY = doc.y;
@@ -667,7 +642,7 @@ exports.generateReceiptPDF = async (payment, station) => {
       }
 
       // ===================================
-      // SIGNATURE SECTION
+      // SIGNATURE
       // ===================================
       doc.moveDown(2);
       
@@ -684,21 +659,18 @@ exports.generateReceiptPDF = async (payment, station) => {
          .stroke();
 
       // ===================================
-      // MODERN FOOTER WITH BRANDING
+      // FOOTER
       // ===================================
       const footerY = 720;
 
-      // Footer background
       doc.rect(0, footerY, 612, 122).fill(lightBg);
       
-      // Divider line with accent
       doc.moveTo(50, footerY + 10)
          .lineTo(562, footerY + 10)
          .lineWidth(1)
          .strokeColor(accentGold)
          .stroke();
 
-      // Contact information - centered and styled
       doc.fontSize(8)
          .font('Helvetica-Bold')
          .fillColor(brandBlue)
@@ -745,7 +717,6 @@ exports.generateReceiptPDF = async (payment, station) => {
            });
       }
 
-      // Thank you message
       doc.fontSize(9)
          .font('Helvetica-Oblique')
          .fillColor(mediumGray)
@@ -754,7 +725,6 @@ exports.generateReceiptPDF = async (payment, station) => {
            align: 'center'
          });
 
-      // Generation timestamp - small and subtle
       doc.fontSize(7)
          .font('Helvetica')
          .fillColor('#94a3b8')
@@ -768,7 +738,6 @@ exports.generateReceiptPDF = async (payment, station) => {
            { align: 'center', width: 512 }
          );
 
-      // Finalize PDF
       doc.end();
 
     } catch (error) {
