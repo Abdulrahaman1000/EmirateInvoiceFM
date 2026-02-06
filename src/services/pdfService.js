@@ -1,6 +1,7 @@
 // ============================================
 // FILE: src/services/pdfService.js
 // PDF Generation Service - Professional Styled with VAT
+// FIXED VERSION - Improved spacing and alignment
 // ============================================
 
 const PDFDocument = require('pdfkit');
@@ -180,11 +181,11 @@ exports.generateInvoicePDF = async (invoice, station) => {
       doc.rect(40, tableTop, 532, 25).fill(primaryColor);
 
       const col1X = 50;
-      const col2X = 220;
-      const col3X = 300;
-      const col4X = 360;
+      const col2X = 230;
+      const col3X = 310;
+      const col4X = 365;
       const col5X = 420;
-      const col6X = 500;
+      const col6X = 495;
 
       doc.fontSize(9)
          .fillColor('#ffffff')
@@ -195,7 +196,7 @@ exports.generateInvoicePDF = async (invoice, station) => {
       doc.text('SLOTS', col3X, tableTop + 8);
       doc.text('DAYS', col4X, tableTop + 8);
       doc.text('RATE', col5X, tableTop + 8);
-      doc.text('TOTAL', col6X, tableTop + 8, { align: 'right' });
+      doc.text('TOTAL', col6X, tableTop + 8, { align: 'right', width: 67 });
 
       let yPos = tableTop + 35;
       doc.fillColor(darkGray).font('Helvetica');
@@ -214,13 +215,13 @@ exports.generateInvoicePDF = async (invoice, station) => {
                          (service.daily_slots * service.campaign_days * service.rate_per_slot);
 
         doc.fontSize(9).fillColor(darkGray);
-        doc.text(service.description || 'Service', col1X, yPos, { width: 160 });
+        doc.text(service.description || 'Service', col1X, yPos, { width: 170 });
         doc.text(service.duration || '-', col2X, yPos);
         doc.text((service.daily_slots || 0).toString(), col3X, yPos);
         doc.text((service.campaign_days || 0).toString(), col4X, yPos);
-        doc.text(safeFormatCurrency(service.rate_per_slot || 0), col5X, yPos, { width: 70 });
+        doc.text(safeFormatCurrency(service.rate_per_slot || 0), col5X, yPos, { width: 65 });
         doc.font('Helvetica-Bold')
-           .text(safeFormatCurrency(lineTotal), col6X, yPos, { align: 'right', width: 62 });
+           .text(safeFormatCurrency(lineTotal), col6X, yPos, { align: 'right', width: 67 });
 
         yPos += 25;
         doc.font('Helvetica');
@@ -229,33 +230,36 @@ exports.generateInvoicePDF = async (invoice, station) => {
       // ==================== TOTALS SECTION WITH VAT ====================
       yPos += 10;
       
-      doc.rect(350, yPos, 222, 130).fill(lightGray).stroke(primaryColor);
+      doc.rect(350, yPos, 222, 145).fill(lightGray).stroke(primaryColor);
 
       yPos += 10;
 
       doc.fontSize(10).fillColor(darkGray).font('Helvetica-Bold');
-      doc.text('Total Slots:', 370, yPos);
-      doc.font('Helvetica').text((invoice.total_slots || 0).toString(), 520, yPos, { align: 'right' });
+      doc.text('Total Slots:', 365, yPos);
+      doc.font('Helvetica').text((invoice.total_slots || 0).toString(), 540, yPos, { align: 'right', width: 22 });
 
       yPos += 25;
       
-      doc.font('Helvetica-Bold').text('SUBTOTAL:', 370, yPos);
-      doc.font('Helvetica').text(safeFormatCurrency(invoice.subtotal || 0), 480, yPos, { align: 'right' });
+      doc.font('Helvetica-Bold').text('SUBTOTAL:', 365, yPos);
+      doc.font('Helvetica').text(safeFormatCurrency(invoice.subtotal || 0), 460, yPos, { align: 'right', width: 102 });
 
       yPos += 20;
       
       const vatLabel = `VAT (${invoice.vat_rate || 7.5}%):`;
-      doc.fillColor(darkGray).font('Helvetica').text(vatLabel, 370, yPos);
-      doc.text(safeFormatCurrency(invoice.vat_amount || 0), 480, yPos, { align: 'right' });
+      doc.fillColor(darkGray).font('Helvetica').text(vatLabel, 365, yPos);
+      doc.text(safeFormatCurrency(invoice.vat_amount || 0), 460, yPos, { align: 'right', width: 102 });
 
       yPos += 25;
       
-      doc.rect(350, yPos - 5, 222, 35).fill(primaryColor);
-      doc.fontSize(11).fillColor('#ffffff').font('Helvetica-Bold');
-      doc.text('TOTAL AMOUNT PAYABLE:', 370, yPos + 5);
-      doc.fontSize(14).text(safeFormatCurrency(invoice.total_amount || 0), 450, yPos + 5, { align: 'right' });
+      doc.rect(350, yPos - 5, 222, 40).fill(primaryColor);
+      
+      doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
+      doc.text('TOTAL AMOUNT', 365, yPos + 5);
+      doc.text('PAYABLE:', 365, yPos + 15);
+      
+      doc.fontSize(13).text(safeFormatCurrency(invoice.total_amount || 0), 460, yPos + 10, { align: 'right', width: 102 });
 
-      yPos += 45;
+      yPos += 50;
 
       if (invoice.amount_in_words) {
         doc.fontSize(9)
@@ -268,17 +272,17 @@ exports.generateInvoicePDF = async (invoice, station) => {
 
       // ==================== PAYMENT STATUS ====================
       if (invoice.amount_paid > 0) {
-        doc.rect(350, yPos, 222, 60).fill('#f0fdf4').stroke('#10b981');
+        doc.rect(350, yPos, 222, 65).fill('#f0fdf4').stroke('#10b981');
 
         doc.fontSize(9).fillColor(darkGray).font('Helvetica-Bold');
-        doc.text('Amount Paid:', 370, yPos + 10);
-        doc.fillColor('#10b981').text(safeFormatCurrency(invoice.amount_paid), 500, yPos + 10, { align: 'right' });
+        doc.text('Amount Paid:', 365, yPos + 12);
+        doc.fillColor('#10b981').text(safeFormatCurrency(invoice.amount_paid), 460, yPos + 12, { align: 'right', width: 102 });
 
-        doc.fillColor(darkGray).text('Outstanding:', 370, yPos + 30);
+        doc.fillColor(darkGray).text('Outstanding:', 365, yPos + 35);
         doc.fillColor(accentColor).font('Helvetica-Bold')
-           .text(safeFormatCurrency(invoice.outstanding_balance || 0), 500, yPos + 30, { align: 'right' });
+           .text(safeFormatCurrency(invoice.outstanding_balance || 0), 460, yPos + 35, { align: 'right', width: 102 });
 
-        yPos += 70;
+        yPos += 75;
       }
 
       // ==================== PAYMENT TERMS ====================
