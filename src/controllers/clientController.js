@@ -1,10 +1,11 @@
 // ============================================
 // FILE: src/controllers/clientController.js
-// Client Management Controller
+// Client Management Controller - WITH CASCADE DELETE
 // ============================================
 
 const Client = require('../models/Client');
 const Invoice = require('../models/Invoice');
+const Payment = require('../models/Payment');
 const asyncHandler = require('../middleware/asyncHandler');
 
 /**
@@ -128,7 +129,7 @@ exports.updateClient = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Delete client
+ * @desc    Delete client (WITH CASCADE DELETE FOR TESTING)
  * @route   DELETE /api/clients/:id
  * @access  Private
  */
@@ -142,20 +143,38 @@ exports.deleteClient = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check if client has invoices
-  const invoiceCount = await Invoice.countDocuments({ client_id: client._id });
+  // ===== CASCADE DELETE FOR TESTING =====
+  // Find all invoices for this client
+  const invoices = await Invoice.find({ client_id: client._id });
+  const invoiceIds = invoices.map(inv => inv._id);
+  
+  let deletedInvoices = 0;
+  let deletedPayments = 0;
 
-  if (invoiceCount > 0) {
-    return res.status(400).json({
-      success: false,
-      message: `Cannot delete client with ${invoiceCount} existing invoice(s)`
+  if (invoiceIds.length > 0) {
+    // Delete all payments for these invoices
+    const paymentDeleteResult = await Payment.deleteMany({ 
+      invoice_id: { $in: invoiceIds } 
     });
+    deletedPayments = paymentDeleteResult.deletedCount || 0;
+
+    // Delete all invoices for this client
+    const invoiceDeleteResult = await Invoice.deleteMany({ 
+      client_id: client._id 
+    });
+    deletedInvoices = invoiceDeleteResult.deletedCount || 0;
   }
 
+  // Finally, delete the client
   await client.deleteOne();
 
   res.status(200).json({
     success: true,
-    message: 'Client deleted successfully'
+    message: 'Client and related data deleted successfully',
+    deletedData: {
+      client: client.company_name,
+      invoices: deletedInvoices,
+      payments: deletedPayments
+    }
   });
 });
